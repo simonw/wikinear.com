@@ -14,6 +14,7 @@ AUTHORIZATION_URL = 'http://fireeagle.yahoo.net/oauth/authorize'
 QUERY_API_URL = 'https://fireeagle.yahooapis.com/api/0.1/user'
 QUERY_API_URL_JSON = 'https://fireeagle.yahooapis.com/api/0.1/user.json'
 UPDATE_API_URL = 'https://fireeagle.yahooapis.com/api/0.1/update'
+CALLBACK_URL = 'http://wikinear.com/return/'
 
 # key and secret you got from Fire Eagle when registering an application
 CONSUMER_KEY = settings.FIREEAGLE_CONSUMER_KEY
@@ -63,7 +64,8 @@ def return_(request):
     token = oauth.OAuthToken.from_string(unauthed_token)   
     if token.key != request.GET.get('oauth_token', 'no-token'):
         return HttpResponse("Something went wrong! Tokens do not match")
-    access_token = exchange_request_token_for_access_token(token)
+    verifier = request.GET.get('oauth_verifier', '')
+    access_token = exchange_request_token_for_access_token(token, verifier)
     response = HttpResponseRedirect('/nearby/')
     response.set_cookie('access_token', access_token.to_string())
     return response
@@ -124,7 +126,7 @@ def fetch_response(oauth_request, connection, debug=False):
 
 def get_unauthorised_request_token():
     oauth_request = oauth.OAuthRequest.from_consumer_and_token(
-        consumer, http_url=REQUEST_TOKEN_URL
+        consumer, http_url=REQUEST_TOKEN_URL, parameters={'oauth_callback':CALLBACK_URL}
     )
     oauth_request.sign_request(signature_method, consumer, None)
     resp = fetch_response(oauth_request, connection)
@@ -132,15 +134,11 @@ def get_unauthorised_request_token():
     return token
 
 def get_authorisation_url(token):
-    oauth_request = oauth.OAuthRequest.from_consumer_and_token(
-        consumer, token=token, http_url=AUTHORIZATION_URL
-    )
-    oauth_request.sign_request(signature_method, consumer, token)
-    return oauth_request.to_url()
+    return AUTHORIZATION_URL + "?oauth_token=" + token.key
 
-def exchange_request_token_for_access_token(request_token):
+def exchange_request_token_for_access_token(request_token, verifier):
     oauth_request = oauth.OAuthRequest.from_consumer_and_token(
-        consumer, token=request_token, http_url=ACCESS_TOKEN_URL
+        consumer, token=request_token, http_url=ACCESS_TOKEN_URL, parameters={'oauth_verifier':verifier}
     )
     oauth_request.sign_request(signature_method, consumer, request_token)
     resp = fetch_response(oauth_request, connection)
