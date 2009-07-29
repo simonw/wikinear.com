@@ -1,0 +1,46 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+    "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+    <title>Places near you</title>
+<style type="text/css">
+div {
+  position: relative;
+  height: 310px;
+}
+ol {
+  list-style-type: upper-alpha;
+  margin-left: 300px;
+}
+img {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+</style>
+</head>
+<body>
+
+<h1>Wikipedia pages near you</h1>
+
+<p>Your location: <em>{{ best_location.name }}</em></p>
+
+{% if not nearby_pages %}<p>No nearby Wikipedia pages were found.</p>
+{% else %}
+
+<div>
+<ol>
+{% for page in nearby_pages %}
+<li><a href="http://{{ page.wikipediaUrl }}"><strong>{{ page.title }}</strong></a> - {{ page.summary|safe }} - <em>{{ page.distance|floatformat:2 }} km away</em></li>
+{% endfor %}
+</ol>
+
+<p><img src="http://maps.google.com/staticmap?size=300x300&amp;maptype=mobile&amp;markers={% for page in nearby_pages %}{{ page.lat|floatformat:4 }},{{ page.lng|floatformat:4 }},green{% cycle a,b,c,d,e %}{% if not forloop.last %}%7C{% endif %}{% endfor %}{% if is_exact %}%7C{{ lat|floatformat:4 }},{{ lon|floatformat:4 }},red{% endif %}&amp;key=ABQIAAAAyYu8a7AdbfUctK3zwwu_2hQ7MwmMQKsul3l2VQAW-vPUMbUjSxS8P7fwE7-K60fYVxgncFX5QAQ5Fg">
+</div>
+
+{% endif %}
+
+<p><a href="/unauth/">Log out</a></p>
+
+</body>
+</html>
